@@ -1,35 +1,61 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React, { useState, useEffect } from 'react';
+import { api } from './services/api.js';
+import LoginPage from './pages/LoginPage.jsx';
+import AdminLayout from './layouts/AdminLayout.jsx';
+import PengelolaLayout from './layouts/PengelolaLayout.jsx';
 
-function App() {
-  const [count, setCount] = useState(0)
+export default function App() {
+  const [token, setToken] = useState(localStorage.getItem('authToken'));
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+  useEffect(() => {
+    if (token) {
+      api.getCurrentUser()
+        .then(response => {
+          setUser(response.data);
+        })
+        .catch(() => {
+          localStorage.removeItem('authToken');
+          setToken(null);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    } else {
+      setLoading(false);
+    }
+  }, [token]);
+
+  const handleLogin = (newToken, userData) => {
+    localStorage.setItem('authToken', newToken);
+    setToken(newToken);
+    setUser(userData);
+  };
+
+  const handleLogout = () => {
+    api.logout().finally(() => {
+      localStorage.removeItem('authToken');
+      setToken(null);
+      setUser(null);
+    });
+  };
+
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
+
+  if (!token || !user) {
+    return <LoginPage onLogin={handleLogin} />;
+  }
+
+  if (user.role === 'admin') {
+    return <AdminLayout user={user} onLogout={handleLogout} />;
+  }
+
+  if (user.role === 'pengelola') {
+    return <PengelolaLayout user={user} onLogout={handleLogout} />;
+  }
+
+  return <LoginPage onLogin={handleLogin} />;
 }
-
-export default App
