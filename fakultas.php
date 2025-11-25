@@ -1,7 +1,6 @@
 <?php 
 include 'header.php';
 
-// Daftar fakultas statis yang akan menjadi dasar untuk kartu dan grafik
 $fakultas_list = [
     'Fakultas Teknik' => 'fas fa-cogs',
     'Fakultas Pertanian' => 'fas fa-seedling',
@@ -24,16 +23,14 @@ $fakultas_abbreviations = [
     'Fakultas Ekonomi dan Bisnis' => 'FEB'
 ];
 
-// --- KONEKSI DATABASE ---
-$host = "localhost"; $user = "root"; $pass = ""; $db = "oai";
-$conn = new mysqli($host, $user, $pass, $db);
+require_once './database/config.php';
+$conn = connect_to_database();
 
 $journal_counts = [];
 $chart_data_json = '[]';
-$raw_chart_data = []; // Inisialisasi untuk digunakan nanti di tabel
+$raw_chart_data = []; 
 
 if (!$conn->connect_error) { 
-    // Query untuk jumlah total jurnal per fakultas (untuk kartu)
     $count_sql = "SELECT fakultas, COUNT(id) as jumlah 
                   FROM jurnal_sumber 
                   WHERE fakultas IS NOT NULL AND fakultas != '' 
@@ -45,7 +42,6 @@ if (!$conn->connect_error) {
         }
     }
 
-    // Query untuk data chart dan tabel (jurnal per fakultas per SINTA)
     $chart_sql = "SELECT fakultas, akreditasi_sinta, COUNT(id) as jumlah
                   FROM jurnal_sumber
                   WHERE fakultas IS NOT NULL AND fakultas != '' AND akreditasi_sinta IS NOT NULL AND akreditasi_sinta LIKE 'Sinta%'
@@ -58,14 +54,27 @@ if (!$conn->connect_error) {
         }
     }
 
-    // Logika untuk memproses data chart
+    $non_sinta_sql = "SELECT fakultas, COUNT(id) as jumlah
+                      FROM jurnal_sumber
+                      WHERE fakultas IS NOT NULL AND fakultas != '' 
+                      AND (akreditasi_sinta IS NULL OR akreditasi_sinta = '' OR akreditasi_sinta NOT LIKE 'Sinta%')
+                      GROUP BY fakultas";
+    $result_non_sinta = $conn->query($non_sinta_sql);
+    
+    if ($result_non_sinta) {
+        while ($row = $result_non_sinta->fetch_assoc()) {
+            $raw_chart_data[$row['fakultas']]['Belum Terakreditasi'] = $row['jumlah'];
+        }
+    }
+
     $fakultas_full_names = array_keys($fakultas_list);
     $chart_labels_short = array_values($fakultas_abbreviations);
-    $sinta_levels = ['Sinta 1', 'Sinta 2', 'Sinta 3', 'Sinta 4', 'Sinta 5', 'Sinta 6'];
+    $sinta_levels = ['Sinta 1', 'Sinta 2', 'Sinta 3', 'Sinta 4', 'Sinta 5', 'Sinta 6', 'Belum Terakreditasi'];
     $sinta_colors = [
         'Sinta 1' => 'rgba(217, 30, 24, 0.7)', 'Sinta 2' => 'rgba(30, 139, 195, 0.7)',
         'Sinta 3' => 'rgba(241, 196, 15, 0.7)', 'Sinta 4' => 'rgba(46, 204, 113, 0.7)',
-        'Sinta 5' => 'rgba(142, 68, 173, 0.7)', 'Sinta 6' => 'rgba(230, 126, 34, 0.7)'
+        'Sinta 5' => 'rgba(142, 68, 173, 0.7)', 'Sinta 6' => 'rgba(230, 126, 34, 0.7)',
+        'Belum Terakreditasi' => 'rgba(149, 165, 166, 0.7)'
     ];
 
     $datasets = [];
@@ -75,8 +84,6 @@ if (!$conn->connect_error) {
             $data_points[] = $raw_chart_data[$fakultas][$sinta] ?? 0;
         }
         
-        // ===== PERUBAHAN DI SINI =====
-        // Kondisi 'if' dihapus agar semua level Sinta selalu ditambahkan ke dataset
         $datasets[] = [
             'label' => $sinta, 'data' => $data_points,
             'backgroundColor' => $sinta_colors[$sinta], 'borderRadius' => 4,
@@ -114,7 +121,6 @@ if (!$conn->connect_error) {
             ?>
         </div>
 
-        <!-- ===== BAGIAN BARU: DIAGRAM BATANG ===== -->
         <div class="stats-chart-container" style="margin-top: 50px;">
              <div class="spss-table-header">
                 <h3>Statistik Jurnal Terakreditasi per Fakultas</h3>
@@ -124,7 +130,6 @@ if (!$conn->connect_error) {
             </div>
         </div>
 
-        <!-- ===== TABEL DETAIL BARU ===== -->
         <div class="stats-table-container spss-style" style="margin-top: 50px;">
             <div class="spss-table-header">
                 <h3>Rincian Jurnal Terakreditasi per Fakultas</h3>
@@ -140,6 +145,7 @@ if (!$conn->connect_error) {
                         <th>S4</th>
                         <th>S5</th>
                         <th>S6</th>
+                        <th>Belum Terakreditasi</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -155,11 +161,13 @@ if (!$conn->connect_error) {
                         $s4 = $raw_chart_data[$nama_fakultas]['Sinta 4'] ?? 0;
                         $s5 = $raw_chart_data[$nama_fakultas]['Sinta 5'] ?? 0;
                         $s6 = $raw_chart_data[$nama_fakultas]['Sinta 6'] ?? 0;
+                        $belum = $raw_chart_data[$nama_fakultas]['Belum Terakreditasi'] ?? 0;
                         
-                        $total_per_fakultas = $s1 + $s2 + $s3 + $s4 + $s5 + $s6;
+                        $total_per_fakultas = $s1 + $s2 + $s3 + $s4 + $s5 + $s6 + $belum;
                         $sinta_totals['Sinta 1'] += $s1; $sinta_totals['Sinta 2'] += $s2;
                         $sinta_totals['Sinta 3'] += $s3; $sinta_totals['Sinta 4'] += $s4;
                         $sinta_totals['Sinta 5'] += $s5; $sinta_totals['Sinta 6'] += $s6;
+                        $sinta_totals['Belum Terakreditasi'] += $belum;
                         $grand_total += $total_per_fakultas;
                     ?>
                     <tr>
@@ -171,6 +179,7 @@ if (!$conn->connect_error) {
                         <td><?php echo $s4; ?></td>
                         <td><?php echo $s5; ?></td>
                         <td><?php echo $s6; ?></td>
+                        <td><?php echo $belum; ?></td>
                     </tr>
                     <?php endforeach; ?>
                 </tbody>
@@ -184,6 +193,7 @@ if (!$conn->connect_error) {
                         <th><?php echo $sinta_totals['Sinta 4']; ?></th>
                         <th><?php echo $sinta_totals['Sinta 5']; ?></th>
                         <th><?php echo $sinta_totals['Sinta 6']; ?></th>
+                        <th><?php echo $sinta_totals['Belum Terakreditasi']; ?></th>
                     </tr>
                 </tfoot>
             </table>
@@ -192,7 +202,6 @@ if (!$conn->connect_error) {
     </div>
 </main>
 
-<!-- Memuat library Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
