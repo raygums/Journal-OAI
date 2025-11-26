@@ -18,6 +18,14 @@ $current_page = basename($_SERVER['PHP_SELF']);
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
+
+* {
+    font-family: 'Poppins', sans-serif;
+}
+</style>
+
 <body>
     <header class="site-header">
         <div class="container">
@@ -33,6 +41,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                         <li class="<?php if ($current_page == 'penerbit.php' || $current_page == 'jurnal_penerbit.php') { echo 'active'; } ?>"><a href="penerbit.php">Penerbit</a></li>
                         <li class="<?php if ($current_page == 'subjek.php' || $current_page == 'jurnal_subjek.php') { echo 'active'; } ?>"><a href="subjek.php">Subjek</a></li>
                         <li class="<?php if ($current_page == 'statistik.php') { echo 'active'; } ?>"><a href="statistik.php">Statistik</a></li>
+                        <li class="<?php if ($current_page == 'tentang.php') { echo 'active'; } ?>"><a href="tentang.php">Tentangy</a></li>
                     </ul>
                 </nav>
             <button id="mobile-menu-toggle" class="mobile-menu-button">

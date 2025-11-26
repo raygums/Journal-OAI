@@ -1,9 +1,6 @@
 <?php
-// Memulai session untuk menyimpan pesan notifikasi.
-// Session harus selalu dimulai di baris paling awal.
 session_start();
 
-// Periksa apakah pengguna sudah login dan memiliki peran pengelola
 if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'pengelola') {
     header("Location: login.php");
     exit();
@@ -29,10 +26,9 @@ $conn = connect_to_database();
         .checkbox-item {
             display: grid;
             grid-template-columns: auto 1fr;
-            gap: 8px; /* Memberi jarak antara checkbox dan teks */
+            gap: 8px; 
             align-items: start; 
         }
-        /* CSS tambahan untuk notifikasi */
         .notification {
             padding: 15px;
             margin-bottom: 20px;
@@ -373,50 +369,53 @@ $conn = connect_to_database();
             
         </div> </div> <script src="script.js"></script>
     <script>
-    document.getElementById('sidebar-toggle').addEventListener('click', function() {
-    document.getElementById('sidebar').classList.toggle('collapsed');
-    if (document.getElementById('sidebar').classList.contains('collapsed')) {
-        localStorage.setItem('sidebarStatePengelola', 'collapsed');
-    } else {
-        localStorage.setItem('sidebarStatePengelola', 'expanded');
-    }
-});
-if (localStorage.getItem('sidebarStatePengelola') === 'collapsed') {
-    document.getElementById('sidebar').classList.add('collapsed');
-}
-        // Menunggu hingga seluruh konten halaman dimuat
     document.addEventListener('DOMContentLoaded', function() {
-        
-        // Mengambil semua elemen checkbox untuk Subject Area Garuda
-        const garudaCheckboxes = document.querySelectorAll('.garuda-checkbox');
-        
-        // Array untuk melacak urutan checkbox yang dicentang
-        let selectedGaruda = [];
-        const maxSelection = 5;
+        const subjectSelect = document.getElementById('subject_arjuna');
+        const subSubjectSelect = document.getElementById('sub_subject_arjuna');
+        const subSubjectMap = {
+            'Biokimia, Genetika dan Biologi Molekuler': ['Biofisika', 'Biokimia', 'Biokimia Klinis', 'Biokimia, Genetiika dan Biologi Molekuler (Lain-lain)', 'Biologi Molekuler', 'Biologi Perkembangan', 'Biologi Sel', 'Biologi Struktur', 'Bioteknologi', 'Endokrinologi', 'Fisiologi', 'Genetika', 'Kedokteran Molekuler', 'Penelitian Kanker', 'Penuaan'],
+            'Bisnis, Menejemen, dan Akutansi (semua kategori)': ['Pemasaran', 'Akuntansi', 'Manajemen SDM', 'Bisnis dan Manajemen Internasional', 'Bisnis, Manajemen, dan Akuntansi (Lain-lain)', 'Manajemen Teknologi dan Inovasi', 'Relasi Industri', 'Sistem Informasi Manajemen', 'Strategi dan Manajemen', 'Tourism, Leisure and Hospitality Management'],
+            'Energi (semua kategori)': ['Energi Terbarukan', 'Teknologi Bahan Bakar', 'Teknik dan Energi Nuklir', 'Teknik Energi dan Teknologi Daya'],
+            'Fisika dan Astronomi': ['Akustik dan Ultrasonik',
+'Astronomi dan Astrofisika',
+'Condensed Matter Physics',
+'Fisika Nonlinear dan Statistk',
+'Fisika Nuklir dan Energi Tinggi',
+'Fisika Nuklir dan Molekuler, dan Ooptik',
+'Fisika dan Astronomi (Lain-Lain)',
+'Instrumentasi',
+'Permukaan dan Interface',
+'Radiasi'],
+            'Ilmu Bumi dan Planet (semua kategori)': ['Geologi', 'Oseanografi', 'Ilmu Atmosfer'],
+            'Ilmu Ekonomi, Ekonometrika dan Keuangan (semua kategori)': ['Ekonomi Pembangunan', 'Keuangan Perbankan', 'Ekonometrika Terapan'],
+            'Ilmu Komputer (semua kategori)': ['Kecerdasan Buatan', 'Jaringan Komputer', 'Rekayasa Perangkat Lunak', 'Sistem Informasi'],
+            'Ilmu Material (semua kategori)': ['Keramik', 'Polimer', 'Material Komposit'],
+            'Teknik (semua kategori)': ['Teknik Sipil', 'Teknik Mesin', 'Teknik Elektro', 'Teknik Kimia', 'Arsitektur'],
+            'Umum': ['Lain-lain']
+        };
 
-        // Menambahkan event listener ke setiap checkbox
-        garudaCheckboxes.forEach(checkbox => {
-            checkbox.addEventListener('change', function() {
-                
-                // Jika checkbox dicentang
-                if (this.checked) {
-                    // Tambahkan ID checkbox ke dalam array pelacak
-                    selectedGaruda.push(this.id);
-                    
-                    // Jika jumlah yang dicentang melebihi batas maksimal
-                    if (selectedGaruda.length > maxSelection) {
-                        // Ambil ID checkbox pertama yang dicentang
-                        const firstSelectedId = selectedGaruda.shift(); // Ambil dan hapus elemen pertama
-                        
-                        // Dapatkan elemen checkbox tersebut dan hapus centangnya
-                        document.getElementById(firstSelectedId).checked = false;
-                    }
-                } else {
-                    // Jika centang dihilangkan, hapus ID checkbox dari array pelacak
-                    selectedGaruda = selectedGaruda.filter(id => id !== this.id);
-                }
+        // Fungsi untuk memperbarui dropdown sub-subjek
+        function updateSubSubjects() {
+            const selectedSubject = subjectSelect.value;
+            const subSubjects = subSubjectMap[selectedSubject] || []; 
+
+            subSubjectSelect.innerHTML = '';
+
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = 'Pilih Sub Subjek...';
+            subSubjectSelect.appendChild(defaultOption);
+
+            subSubjects.forEach(sub => {
+                const option = document.createElement('option');
+                option.value = sub;
+                option.textContent = sub;
+                subSubjectSelect.appendChild(option);
             });
-        });
+        }
+
+        subjectSelect.addEventListener('change', updateSubSubjects);
+        updateSubSubjects();
     });
     </script>
 </body>

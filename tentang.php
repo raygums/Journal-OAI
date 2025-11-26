@@ -1,7 +1,12 @@
 <?php include 'header.php'; ?>
 
 <style>
-/* Hero Section */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
+
+* {
+    font-family: 'Poppins', sans-serif;
+}
+
 .hero-tentang {
     background: linear-gradient(to right, #0a1628, #1e3a5f, #2563a8);
     color: white;
@@ -36,14 +41,15 @@
     margin-bottom: 25px;
     font-weight: 800;
     line-height: 1.2;
+    color: #ffffff
 }
 
-.hero-text h1 span {
+/* .hero-text h1 span {
     background: linear-gradient(to right, #ffd89b, #2563eb);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-}
+} */
 
 .hero-text p {
     font-size: 1.2rem;
@@ -676,12 +682,11 @@
 </style>
 
 <main>
-    <!-- Hero Section -->
     <section class="hero-tentang">
         <div class="container">
             <div class="hero-content-wrapper">
                 <div class="hero-text">
-                    <h1>Portal <span>Jurnal Ilmiah</span> Universitas Lampung</h1>
+                    <h1>Unila E-Journal System</h1>
                     <p>
                         Sistem informasi terintegrasi yang menghubungkan seluruh jurnal ilmiah dari berbagai fakultas, 
                         memberikan akses mudah dan cepat untuk penelitian akademik berkualitas.

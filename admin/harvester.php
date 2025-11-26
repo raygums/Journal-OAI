@@ -14,23 +14,42 @@ $conn = connect_to_database();
 
 // Ambil data jurnal dari database
 $jurnal_list = [];
-$sql = "SELECT id, judul_jurnal, link_oai, status, created_at FROM jurnal_sumber WHERE link_oai IS NOT NULL AND link_oai != ''";
+$sql = "
+    SELECT
+        js.id,
+        js.judul_jurnal,
+        js.link_oai,
+        js.status,
+        js.created_at,
+        IFNULL(stats.article_count, 0) AS article_count,
+        stats.last_harvest
+    FROM
+        jurnal_sumber js
+    LEFT JOIN (
+        SELECT
+            journal_source_id,
+            COUNT(*) AS article_count,
+            MAX(created_at) AS last_harvest
+        FROM
+            artikel_oai
+        GROUP BY
+            journal_source_id
+    ) AS stats ON js.id = stats.journal_source_id
+    WHERE
+        js.link_oai IS NOT NULL
+        AND js.link_oai != ''
+        AND js.status = 'selesai' -- Filter hanya untuk jurnal yang sudah disetujui
+    ORDER BY
+        js.judul_jurnal ASC;
+";
+
 $result = $conn->query($sql);
 
-if ($result->num_rows > 0) {
-    while($row = $result->fetch_assoc()) {
-        // Cek apakah jurnal sudah di-harvest (ada artikel di artikel_oai)
-        $check_harvest = $conn->prepare("SELECT COUNT(*) as count, MAX(created_at) as last_harvest FROM artikel_oai WHERE journal_source_id = ?");
-        $check_harvest->bind_param("i", $row['id']);
-        $check_harvest->execute();
-        $harvest_result = $check_harvest->get_result()->fetch_assoc();
-        
-        $row['is_harvested'] = $harvest_result['count'] > 0;
-        $row['article_count'] = $harvest_result['count'];
-        $row['last_harvest'] = $harvest_result['last_harvest'];
-        
+if ($result && $result->num_rows > 0) {
+    while ($row = $result->fetch_assoc()) {
+        // Karena data statistik sudah diambil oleh query, kita hanya perlu menata ulang
+        $row['is_harvested'] = $row['article_count'] > 0;
         $jurnal_list[] = $row;
-        $check_harvest->close();
     }
 }
 
